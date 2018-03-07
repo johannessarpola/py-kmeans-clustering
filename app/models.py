@@ -15,7 +15,7 @@ class Document(object):
     def vector_dict(self):
         dict = {}
         for v in self.vector:
-            w,v = v.split(':')
+            w,v = v.rsplit(':', 1)
             dict[w] = float(v)
         return dict
 
@@ -42,3 +42,24 @@ class DocumentHash(object):
         else:
             print('original was not in attributes')
             return ''
+
+
+class ClusteringSpace(object):
+    id = ""
+    cluster_model = {}
+    vectorizer = {}
+
+    def __init__(self, id, clustering_model, vectorizer):
+        self.id = id
+        self.cluster_model = clustering_model
+        self.vectorizer = vectorizer
+
+class ClusteringResult(object):
+    id = ""
+    cluster_model = {}
+    vectorizer = {}
+
+    def __init__(self, id, clustering_model, vectorizer):
+        self.id = id
+        self.cluster_model = clustering_model
+        self.vectorizer = vectorizer

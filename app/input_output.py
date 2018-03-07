@@ -19,8 +19,12 @@ def get_filepaths_in_folder(folder):
             print(p)
     return paths
 
-
 def read_and_extend_collection_json_sink(file, collection):
     opened = open(file, "r")
     collection.append(json.load(opened))
     opened.close()
+
+def write_and_close(path, content):
+    out = open(path, 'w')
+    out.write(content)
+    out.close()

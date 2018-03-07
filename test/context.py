@@ -4,7 +4,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from app import models
 from app import adapter
-from app import input
+from app import input_output
 from app import aggregation
 
 def relative_resource(path):
