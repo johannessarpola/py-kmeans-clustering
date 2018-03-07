@@ -1,4 +1,5 @@
 from collections import defaultdict
+import multiprocessing as mp
 
 def join_all(processes):
     for p in processes:
@@ -35,3 +36,11 @@ def gather_to_dict_from_tuples_and_join(queue, processes):
         d[process_result[0]] = process_result[1]
     join_all(processes)
     return d
+
+
+def create_process_and_start(target, args=(), msg=None):
+    if msg is not None:
+        print(msg)
+    p = mp.Process(target=target, args=args)
+    p.start()
+    return p

@@ -44,17 +44,7 @@ class DocumentHash(object):
             return ''
 
 
-class ClusteringSpace(object):
-    id = ""
-    cluster_model = {}
-    vectorizer = {}
-
-    def __init__(self, id, clustering_model, vectorizer):
-        self.id = id
-        self.cluster_model = clustering_model
-        self.vectorizer = vectorizer
-
-class ClusteringResult(object):
+class ClusterContext(object):
     id = ""
     cluster_model = {}
     vectorizer = {}
