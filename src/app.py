@@ -1,26 +1,11 @@
-import argparse
 import json
 import multiprocessing as mp
 from collections import defaultdict, OrderedDict
 
 import model_utils
 import multiprocessing_utils as mpu
-from app import aggregation, input_output
-
-parser = argparse.ArgumentParser()
-
-parser.add_argument('-if', "--input_folder", help="where the documents are located", )
-parser.add_argument('-hf', "--hash_folder", help="where the hashes are located", )
-parser.add_argument('-nc', "--num_clusters", help="how many clusters to use", )
-parser.add_argument('-o', "--output", help="where the clustering result will be outputted", )
-
-args = parser.parse_args()
-
-docs_folder = args.input_folder
-hashes_folder = args.hash_folder
-num_clusters = int(args.num_clusters)
-output_file = args.output
-
+from src import aggregation, input_output
+from src.adapter import cluster_dict_to_array_json
 
 def app_get_json_inputs(docs_folder, hashes_folder):
     source_jsons = input_output.get_jsons_from_folder(docs_folder)
@@ -92,7 +77,7 @@ def app_do_clustering_worker(documents_by_strategies, document_hashes_by_hashes,
     return categories_by_clusters
 
 
-def app_gather_result(documents_by_strategies, document_hashes_by_hashes):
+def app_clustering_worker(num_clusters, documents_by_strategies, document_hashes_by_hashes):
     cluster_context = app_create_cluster_context_worker(num_clusters, documents_by_strategies)
     categories_by_clusters = app_do_clustering_worker(documents_by_strategies, document_hashes_by_hashes,
                                                       cluster_context)
@@ -138,15 +123,16 @@ def app_grouping_worker(source_jsons, hash_jsons):
            results[dbh_id], \
            results[dhbh_id]
 
+def main(docs_f, hashes_f, num_c, output_f):
+    docs_folder = docs_f
+    hashes_folder = hashes_f
+    num_clusters = num_c
+    output_file = output_f
 
-if __name__ == '__main__':
     source_jsons, hash_jsons = app_get_json_inputs(docs_folder, hashes_folder)
 
     documents_by_strategies, documents_by_hashes, document_hashes_by_hashes = app_grouping_worker(source_jsons,
                                                                                                   hash_jsons)
-    clustering_results = app_gather_result(documents_by_strategies, document_hashes_by_hashes)
-
-    result_json = json.dumps(clustering_results, indent=4)
-    input_output.write_and_close(output_file, result_json)
-
-    print("done!")
+    clustering_results = app_clustering_worker(num_clusters, documents_by_strategies, document_hashes_by_hashes)
+    json_str = cluster_dict_to_array_json(clustering_results)
+    input_output.write_and_close(output_file, json_str)

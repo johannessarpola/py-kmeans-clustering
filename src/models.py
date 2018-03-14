@@ -53,3 +53,14 @@ class ClusterContext(object):
         self.id = id
         self.cluster_model = clustering_model
         self.vectorizer = vectorizer
+
+
+class ClusteringResult(object):
+    id = ""
+    clusters = []
+
+    def __init__(self, id, clusters) -> None:
+        self.id = id
+        self.clusters = clusters
+
+

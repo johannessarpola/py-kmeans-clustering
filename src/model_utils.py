@@ -1,4 +1,4 @@
-from app import adapter
+from src import adapter
 
 
 def document_creator(json):
