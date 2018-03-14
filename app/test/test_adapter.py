@@ -1,6 +1,6 @@
 import unittest
 import json
-from context import relative_resource
+from app.test.context import relative_resource
 import adapter
 
 

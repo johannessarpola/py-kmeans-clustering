@@ -1,5 +1,5 @@
 import unittest
-from context import path_to_resources
+from app.test.context import path_to_resources
 import input_output
 
 
