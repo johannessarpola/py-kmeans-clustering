@@ -1,7 +1,7 @@
 import unittest
 import json
 from app.test.context import relative_resource
-import adapter
+from app.src import adapter
 
 
 class ModelTest(unittest.TestCase):

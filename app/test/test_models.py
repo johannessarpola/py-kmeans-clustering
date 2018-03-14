@@ -1,5 +1,5 @@
 import unittest
-from app.test.context import models
+from app.src import models
 
 
 class ModelTest(unittest.TestCase):

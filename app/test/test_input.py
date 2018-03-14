@@ -1,7 +1,6 @@
 import unittest
 from app.test.context import path_to_resources
-import input_output
-
+from app.src import input_output
 
 class ModelTest(unittest.TestCase):
     def test_get_jsons_from_folder(self):

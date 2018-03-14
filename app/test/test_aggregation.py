@@ -1,7 +1,7 @@
 import unittest
 import json
 from app.test.context import relative_resource
-import aggregation
+from app.src import aggregation
 
 
 class Object(object):
