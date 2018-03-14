@@ -1,7 +1,7 @@
 
 import argparse
 import gc
-from src import app
+import app
 
 parser = argparse.ArgumentParser()
 

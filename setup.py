@@ -16,7 +16,7 @@ setup(name='clustering_cli',
       author='Johannes Sarpola',
       author_email='johannes.sarpola@gmail.com',
       url='https://gitlab.com/johannessarpola/',
-      packages=['src'],
+      packages=['app'],
       setup_requires=['pytest-runner', 'numpy', 'sklearn', 'scipy'],
       tests_require=['pytest'],
       )
