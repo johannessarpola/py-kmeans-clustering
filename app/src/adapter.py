@@ -1,6 +1,6 @@
 import json
 from app.src import models
-from obj_utils import call_if_obj_has_method_or_default
+from app.src.obj_utils import call_if_obj_has_method_or_default
 
 
 def json_to_document(json):
