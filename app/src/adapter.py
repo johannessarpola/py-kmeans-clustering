@@ -1,5 +1,6 @@
 import json
 from app.src import models
+from obj_utils import call_if_obj_has_method_or_default
 
 
 def json_to_document(json):
@@ -54,18 +55,20 @@ def load_jsons_to_models(jsons, creator):
     return all_models
 
 
-def cluster_dict_to_obj_array(dict):
+def toJsonFormat(obj):
+    jsonObj = call_if_obj_has_method_or_default(obj, 'asJson', obj)
+    return jsonObj
+
+def cluster_dict_to_obj_list(dict):
     result = []
     for (k, v) in dict.items():
-        obj = models.ClusteringResult(k, v)
-        result.append(obj)
+        des = []
+        for (i,c) in v.items():
+            des.append(models.Cluster(i, c).asJson())
+        result.append(models.ClusteringResult(k, des).asJson())
     return result
 
 
-def cluster_dict_to_array_json(dict):
-    r = cluster_dict_to_obj_array(dict)
-    return json.dumps(r, default=obj_dict, indent=4)
-
-
-def obj_dict(obj):
-    return obj.__dict__
+def clustering_dict_to_json(dict):
+    r = cluster_dict_to_obj_list(dict)
+    return json.dumps(r, indent=4, default=lambda o: o.__dict__)

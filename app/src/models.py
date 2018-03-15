@@ -1,12 +1,22 @@
-class Document(object):
+class Identified(object):
     id = ''
+
+    def __init__(self, id):
+        self.id = id
+
+    def asDict(self):
+        d = {}
+        d['id'] = self.id
+        return d
+
+class Document(Identified):
     max = 0
     min = 0
     strategy = ''
     vector = []
 
     def __init__(self, id, max, min, strategy, vector):
-        self.id = id
+        super().__init__(id)
         self.max = max
         self.min = min
         self.strategy = strategy
@@ -15,17 +25,17 @@ class Document(object):
     def vector_dict(self):
         dict = {}
         for v in self.vector:
-            w,v = v.rsplit(':', 1)
+            w, v = v.rsplit(':', 1)
             dict[w] = float(v)
         return dict
 
-class DocumentHash(object):
-    id = ''
+
+class DocumentHash(Identified):
     content = ''
     attributes = {}
 
     def __init__(self, id, content, attributes):
-        self.id = id
+        super().__init__(id)
         self.content = content
         self.attributes = attributes
 
@@ -44,23 +54,44 @@ class DocumentHash(object):
             return ''
 
 
-class ClusterContext(object):
-    id = ""
+class ClusterContext(Identified):
     cluster_model = {}
     vectorizer = {}
 
     def __init__(self, id, clustering_model, vectorizer):
-        self.id = id
+        super().__init__(id)
         self.cluster_model = clustering_model
         self.vectorizer = vectorizer
 
 
-class ClusteringResult(object):
-    id = ""
-    clusters = []
+class CountElement(Identified):
+    cnt = 0
 
-    def __init__(self, id, clusters) -> None:
-        self.id = id
-        self.clusters = clusters
+    def __init__(self, id, cnt):
+        super().__init__(id)
+        self.cnt = cnt
 
+
+class DictElement(Identified):
+    data_key = ''
+    data = {}
+
+    def __init__(self, id, data, data_key = 'data'):
+        super().__init__(id)
+        self.data_key = data_key
+        self.data = data
+
+    def asJson(self):
+        base = super().asDict()
+        base[self.data_key] = self.data
+        return base
+
+
+class ClusteringResult(DictElement):
+    def __init__(self, id, clusters):
+        super().__init__(id, clusters, 'clusters')
+
+class Cluster(DictElement):
+    def __init__(self, id, clusters):
+        super().__init__(id, clusters, 'categories')
 

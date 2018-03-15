@@ -34,7 +34,7 @@ class ModelTest(unittest.TestCase):
         d = {}
         d["a"] = ["a", "a", "a"]
         d["b"] = ["b", "b", "b"]
-        re = adapter.cluster_dict_to_obj_array(d)
+        re = adapter.cluster_dict_to_obj_list(d)
         self.assertEqual(2, len(re))
         self.assertEqual("a", re[0].id)
         self.assertEqual("b", re[1].id)

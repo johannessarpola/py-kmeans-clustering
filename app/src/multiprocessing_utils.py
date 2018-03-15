@@ -37,7 +37,6 @@ def gather_to_dict_from_tuples_and_join(queue, processes):
     join_all(processes)
     return d
 
-
 def create_process_and_start(target, args=(), msg=None):
     if msg is not None:
         print(msg)

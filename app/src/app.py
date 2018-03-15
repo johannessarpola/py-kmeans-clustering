@@ -1,10 +1,12 @@
 import multiprocessing as mp
-from collections import defaultdict, OrderedDict
+from collections import defaultdict, OrderedDict, Counter
 
-import model_utils
+import model_utils as mu
 import multiprocessing_utils as mpu
+import collection_utils as cu
+
 from app.src import aggregation, input_output
-from app.src.adapter import cluster_dict_to_array_json
+from app.src.adapter import clustering_dict_to_json
 
 def app_get_json_inputs(docs_folder, hashes_folder):
     source_jsons = input_output.get_jsons_from_folder(docs_folder)
@@ -19,20 +21,24 @@ def app_create_categories_from_clustering(cluster_context,
     categories = defaultdict(dict)
     cluster_model = cluster_context.cluster_model
     vectorizer = cluster_context.vectorizer
+    used_categories = set()
 
     for document in documents:
         document_vector = vectorizer.transform(document.vector_dict())
         # Prediction is cluster id which is from [0] ... [n]
-        prediction = cluster_model.predict(document_vector)
+        prediction = str(cluster_model.predict(document_vector))
         category = document_hashes_by_hashes[document.id][0].category()
-        if category in categories[str(prediction)]:
-            # Increment occurence by one
-            categories[str(prediction)][category] = categories[str(prediction)][category] + 1
-        else:
-            # If not exist initialize with 1
-            categories[str(prediction)][category] = 1
+        if prediction not in categories:
+            categories[prediction] = Counter()
+        used_categories.add(category)
+        categories[prediction][category] += 1
+
+    # Add zeroes for all categories so results are equal size
+    cu.fill_counters(categories, used_categories)
+
     # Sort by categories which are from 0 .. n
-    sorted_dict = OrderedDict(sorted(categories.items(), key=lambda t: t[0]))
+    sorting = sorted(categories.items(), key=lambda t: t[0])
+    sorted_dict = OrderedDict(sorting)
     # Put (id, dict) to queue
     queue.put((cluster_context.id, sorted_dict))
 
@@ -102,17 +108,17 @@ def app_grouping_worker(source_jsons, hash_jsons):
     dbs_id, dbh_id, dhbh_id = 'documents_by_strategies', 'documents_by_hashes', 'document_hashes_by_hashes'
 
     p_dbs = mpu.create_process_and_start(do_grouping_sink,
-                                         (dbs_id, 'strategy', model_utils.document_combiner,
+                                         (dbs_id, 'strategy', mu.document_combiner,
                                           source_jsons, queue),
                                          f"Started grouping with id: {dbs_id}")
 
     p_dbh = mpu.create_process_and_start(do_grouping_sink,
-                                         (dbh_id, 'id', model_utils.document_combiner,
+                                         (dbh_id, 'id', mu.document_combiner,
                                           source_jsons, queue),
                                          f"Started grouping with id: {dbh_id}")
 
     p_dhbh = mpu.create_process_and_start(do_grouping_sink,
-                                          (dhbh_id, 'id', model_utils.document_hash_combiner,
+                                          (dhbh_id, 'id', mu.document_hash_combiner,
                                            hash_jsons, queue),
                                           f"Started grouping with id: {dhbh_id}")
 
@@ -133,5 +139,5 @@ def main(docs_f, hashes_f, num_c, output_f):
     documents_by_strategies, documents_by_hashes, document_hashes_by_hashes = app_grouping_worker(source_jsons,
                                                                                                   hash_jsons)
     clustering_results = app_clustering_worker(num_clusters, documents_by_strategies, document_hashes_by_hashes)
-    json_str = cluster_dict_to_array_json(clustering_results)
+    json_str = clustering_dict_to_json(clustering_results)
     input_output.write_and_close(output_file, json_str)
