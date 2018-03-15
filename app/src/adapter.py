@@ -59,7 +59,7 @@ def toJsonFormat(obj):
     jsonObj = call_if_obj_has_method_or_default(obj, 'asJson', obj)
     return jsonObj
 
-def cluster_dict_to_obj_list(dict):
+def cluster_dict_to_output_format(dict):
     result = []
     for (k, v) in dict.items():
         des = []
@@ -70,5 +70,5 @@ def cluster_dict_to_obj_list(dict):
 
 
 def clustering_dict_to_json(dict):
-    r = cluster_dict_to_obj_list(dict)
+    r = cluster_dict_to_output_format(dict)
     return json.dumps(r, indent=4, default=lambda o: o.__dict__)
