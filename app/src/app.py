@@ -54,20 +54,20 @@ def app_do_clustering(documents_by_strategies, document_hashes_by_hashes, cluste
     return processes
 
 
-def app_create_cluster_context(num_clusters, documents_by_strategies, queue):
+def app_create_cluster_context(num_clusters, models_output, documents_by_strategies, queue):
     """"""
     processes = []
     for (strategy, documents) in documents_by_strategies.items():
         p = mpu.create_process_and_start(create_cluster_context_sink,
-                                         (num_clusters, strategy, documents, queue),
+                                         (num_clusters, models_output, strategy, documents, queue),
                                          f"Started {strategy} cluster context modelling")
         processes.append(p)
     return processes
 
 
-def app_create_cluster_context_worker(num_clusters, documents_by_strategies):
+def app_create_cluster_context_worker(num_clusters, models_output, documents_by_strategies):
     queue = mp.Queue()
-    processes = app_create_cluster_context(num_clusters, documents_by_strategies, queue)
+    processes = app_create_cluster_context(num_clusters, models_output, documents_by_strategies, queue)
     cluster_contexts = mpu.gather_to_list_and_join(queue, processes)
     queue.close()
     return cluster_contexts
@@ -81,8 +81,8 @@ def app_do_clustering_worker(documents_by_strategies, document_hashes_by_hashes,
     return categories_by_clusters
 
 
-def app_clustering_worker(num_clusters, documents_by_strategies, document_hashes_by_hashes):
-    cluster_contexts = app_create_cluster_context_worker(num_clusters, documents_by_strategies)
+def app_clustering_worker(num_clusters, models_output, documents_by_strategies, document_hashes_by_hashes):
+    cluster_contexts = app_create_cluster_context_worker(num_clusters, models_output, documents_by_strategies)
     categories_by_clusters = app_do_clustering_worker(documents_by_strategies, document_hashes_by_hashes,
                                                       cluster_contexts)
     return categories_by_clusters
@@ -127,16 +127,19 @@ def app_grouping_worker(source_jsons, hash_jsons):
            results[dbh_id], \
            results[dhbh_id]
 
-def main(docs_f, hashes_f, num_c, output_f):
+def main(docs_f, hashes_f, num_c, output_f, output_models):
+    import os.path
     docs_folder = docs_f
     hashes_folder = hashes_f
     num_clusters = num_c
     output_file = output_f
 
+
     source_jsons, hash_jsons = app_get_json_inputs(docs_folder, hashes_folder)
 
     documents_by_strategies, documents_by_hashes, document_hashes_by_hashes = app_grouping_worker(source_jsons,
                                                                                                   hash_jsons)
-    clustering_results = app_clustering_worker(num_clusters, documents_by_strategies, document_hashes_by_hashes)
+    # todo models output should be configurable
+    clustering_results = app_clustering_worker(num_clusters, output_models, documents_by_strategies, document_hashes_by_hashes)
     json_str = clustering_dict_to_json(clustering_results)
     input_output.write_and_close(output_file, json_str)
