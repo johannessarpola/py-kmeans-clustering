@@ -61,11 +61,13 @@ def toJsonFormat(obj):
 
 def cluster_dict_to_output_format(dict):
     result = []
+    # v is tuple of context and clustering results in dict
     for (k, v) in dict.items():
         des = []
-        for (i,c) in v.items():
+        clusters,context = v
+        for (i,c) in clusters.items():
             des.append(models.Cluster(i, c).asJson())
-        result.append(models.ClusteringResult(k, des).asJson())
+        result.append(models.ClusteringResult(k, des, context.silhuette_coefficent).asJson())
     return result
 
 

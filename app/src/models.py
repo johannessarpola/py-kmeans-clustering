@@ -9,6 +9,7 @@ class Identified(object):
         d['id'] = self.id
         return d
 
+
 class Document(Identified):
     max = 0
     min = 0
@@ -57,11 +58,14 @@ class DocumentHash(Identified):
 class ClusterContext(Identified):
     cluster_model = {}
     vectorizer = {}
+    silhuette_coefficent = 0.0
 
-    def __init__(self, id, clustering_model, vectorizer):
+    def __init__(self, id, clustering_model,
+                 vectorizer, silhuette):
         super().__init__(id)
         self.cluster_model = clustering_model
         self.vectorizer = vectorizer
+        self.silhuette_coefficent = silhuette
 
 
 class CountElement(Identified):
@@ -76,7 +80,7 @@ class DictElement(Identified):
     data_key = ''
     data = {}
 
-    def __init__(self, id, data, data_key = 'data'):
+    def __init__(self, id, data, data_key='data'):
         super().__init__(id)
         self.data_key = data_key
         self.data = data
@@ -88,8 +92,19 @@ class DictElement(Identified):
 
 
 class ClusteringResult(DictElement):
-    def __init__(self, id, clusters):
+    silhouette = 0.0
+    path_to_model = ""
+    def __init__(self, id, clusters, silhouette, path_to_model=""):
         super().__init__(id, clusters, 'clusters')
+        self.silhouette = silhouette
+        self.path_to_model = path_to_model
+
+    def asJson(self):
+        base = super().asJson()
+        base['silhouette'] = self.silhouette
+        base['path_to_model'] = self.path_to_model
+        return base
+
 
 class Cluster(DictElement):
     def __init__(self, id, clusters):

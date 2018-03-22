@@ -1,6 +1,8 @@
 
 import argparse
 import gc
+import os
+
 from app.src import app
 
 parser = argparse.ArgumentParser()
@@ -19,7 +21,9 @@ if __name__ == '__main__':
     num_clusters = int(args.num_clusters)
     output_file = args.output
     for i in range(0, int(args.ntimes)):
+        print(f"-- Running {i}/{args.ntimes}")
         (f, e) = output_file.rsplit('.', 1)
         app.main(docs_folder, hashes_folder, num_clusters, f"{f}_{i}.{e}")
         gc.collect()
-    print("done!")
+        print(f"-- Done with {i + 1}/{args.ntimes} iteration")
+    print("-- Runner is finished!")

@@ -1,12 +1,12 @@
 import multiprocessing as mp
 from collections import defaultdict, OrderedDict, Counter
 
-import model_utils as mu
-import multiprocessing_utils as mpu
-import collection_utils as cu
-
+from app.src import model_utils as mu
+from app.src import multiprocessing_utils as mpu
+from app.src import collection_utils as cu
 from app.src import aggregation, input_output
 from app.src.adapter import clustering_dict_to_json
+from app.src.clustering import create_cluster_context_sink
 
 def app_get_json_inputs(docs_folder, hashes_folder):
     source_jsons = input_output.get_jsons_from_folder(docs_folder)
@@ -40,7 +40,7 @@ def app_create_categories_from_clustering(cluster_context,
     sorting = sorted(categories.items(), key=lambda t: t[0])
     sorted_dict = OrderedDict(sorting)
     # Put (id, dict) to queue
-    queue.put((cluster_context.id, sorted_dict))
+    queue.put((cluster_context, sorted_dict))
 
 
 def app_do_clustering(documents_by_strategies, document_hashes_by_hashes, cluster_contexts, queue):
@@ -56,7 +56,6 @@ def app_do_clustering(documents_by_strategies, document_hashes_by_hashes, cluste
 
 def app_create_cluster_context(num_clusters, documents_by_strategies, queue):
     """"""
-    from clustering import create_cluster_context_sink
     processes = []
     for (strategy, documents) in documents_by_strategies.items():
         p = mpu.create_process_and_start(create_cluster_context_sink,
@@ -69,23 +68,23 @@ def app_create_cluster_context(num_clusters, documents_by_strategies, queue):
 def app_create_cluster_context_worker(num_clusters, documents_by_strategies):
     queue = mp.Queue()
     processes = app_create_cluster_context(num_clusters, documents_by_strategies, queue)
-    cluster_context = mpu.gather_to_list_and_join(queue, processes)
+    cluster_contexts = mpu.gather_to_list_and_join(queue, processes)
     queue.close()
-    return cluster_context
+    return cluster_contexts
 
 
 def app_do_clustering_worker(documents_by_strategies, document_hashes_by_hashes, cluster_context):
     queue = mp.Queue()
     processes = app_do_clustering(documents_by_strategies, document_hashes_by_hashes, cluster_context, queue)
-    categories_by_clusters = mpu.gather_to_dict_from_tuples_and_join(queue, processes)
+    categories_by_clusters = mpu.gather_to_dict_from_clustering_context_and_dict_and_join(queue, processes)
     queue.close()
     return categories_by_clusters
 
 
 def app_clustering_worker(num_clusters, documents_by_strategies, document_hashes_by_hashes):
-    cluster_context = app_create_cluster_context_worker(num_clusters, documents_by_strategies)
+    cluster_contexts = app_create_cluster_context_worker(num_clusters, documents_by_strategies)
     categories_by_clusters = app_do_clustering_worker(documents_by_strategies, document_hashes_by_hashes,
-                                                      cluster_context)
+                                                      cluster_contexts)
     return categories_by_clusters
 
 
