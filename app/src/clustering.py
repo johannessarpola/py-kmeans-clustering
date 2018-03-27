@@ -24,7 +24,7 @@ def vectorize(documents):
 
 def calculate_cluster_silhuette_score(X, model):
     labels = model.labels_
-    return  silhouette_score(X, labels, metric='euclidean', sample_size=1000)
+    return silhouette_score(X, labels, metric='euclidean', sample_size=1000)
 
 def create_clustering_context(model, X, vectorizer, id):
     silhuette = calculate_cluster_silhuette_score(X, model)

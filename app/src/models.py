@@ -23,11 +23,16 @@ class Document(Identified):
         self.strategy = strategy
         self.vector = vector
 
-    def vector_dict(self):
+    def vector_dict(self, normalized = True):
         dict = {}
+        range = max(self.max - self.min, 1)
         for v in self.vector:
             w, v = v.rsplit(':', 1)
-            dict[w] = float(v)
+            fv = float(v)
+            # If range is 1 then all are in their correct values
+            if normalized and range != 1:
+                fv = (fv - 1) * range + self.min
+            dict[w] = fv
         return dict
 
 
