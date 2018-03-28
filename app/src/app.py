@@ -1,6 +1,7 @@
 import multiprocessing as mp
+from sklearn.cluster import KMeans, MiniBatchKMeans, DBSCAN
+import numpy as np
 from collections import defaultdict, OrderedDict, Counter
-
 from app.src import model_utils as mu
 from app.src import multiprocessing_utils as mpu
 from app.src import collection_utils as cu
@@ -8,10 +9,17 @@ from app.src import aggregation, input_output
 from app.src.adapter import clustering_dict_to_json
 from app.src.clustering import create_cluster_context_sink
 
+
 def app_get_json_inputs(docs_folder, hashes_folder):
     source_jsons = input_output.get_jsons_from_folder(docs_folder)
     hash_jsons = input_output.get_jsons_from_folder(hashes_folder)
     return (source_jsons, hash_jsons)
+
+
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
 
 
 def app_create_categories_from_clustering(cluster_context,
@@ -19,14 +27,16 @@ def app_create_categories_from_clustering(cluster_context,
                                           document_hashes_by_hashes,
                                           queue):
     categories = defaultdict(dict)
-    cluster_model = cluster_context.cluster_model
     vectorizer = cluster_context.vectorizer
     used_categories = set()
+    # d_chunks = chunks(documents, 1000)
 
-    for document in documents:
+    # TODO Parallize
+    for document in documents:  # todo parametrize
         document_vector = vectorizer.transform(document.vector_dict())
-        # Prediction is cluster id which is from [0] ... [n]
-        prediction = str(cluster_model.predict(document_vector))
+
+        # Prediction is cluster id which is from ([-1]) [0] ... [n]
+        prediction = str(cluster_context.predict(document_vector))
         category = document_hashes_by_hashes[document.id][0].category()
         if prediction not in categories:
             categories[prediction] = Counter()
@@ -127,6 +137,7 @@ def app_grouping_worker(source_jsons, hash_jsons):
            results[dbh_id], \
            results[dhbh_id]
 
+
 def main(docs_f, hashes_f, num_c, output_f, output_models):
     import os.path
     docs_folder = docs_f
@@ -134,12 +145,12 @@ def main(docs_f, hashes_f, num_c, output_f, output_models):
     num_clusters = num_c
     output_file = output_f
 
-
     source_jsons, hash_jsons = app_get_json_inputs(docs_folder, hashes_folder)
 
     documents_by_strategies, documents_by_hashes, document_hashes_by_hashes = app_grouping_worker(source_jsons,
                                                                                                   hash_jsons)
     # todo models output should be configurable
-    clustering_results = app_clustering_worker(num_clusters, output_models, documents_by_strategies, document_hashes_by_hashes)
+    clustering_results = app_clustering_worker(num_clusters, output_models, documents_by_strategies,
+                                               document_hashes_by_hashes)
     json_str = clustering_dict_to_json(clustering_results)
     input_output.write_and_close(output_file, json_str)

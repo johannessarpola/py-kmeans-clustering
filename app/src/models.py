@@ -64,14 +64,20 @@ class ClusterContext(Identified):
     cluster_model = {}
     vectorizer = {}
     silhuette_coefficent = 0.0
+    X = {}
+    X_pred = {}
 
     def __init__(self, id, clustering_model,
-                 vectorizer, silhuette):
+                 vectorizer, silhuette, X = None, predictionF = None):
         super().__init__(id)
         self.cluster_model = clustering_model
         self.vectorizer = vectorizer
         self.silhuette_coefficent = silhuette
+        self.X = X
+        self.predictionF = predictionF
 
+    def predict(self, X):
+        return self.predictionF(X)
 
 class CountElement(Identified):
     cnt = 0
