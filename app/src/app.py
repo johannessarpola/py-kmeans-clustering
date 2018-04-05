@@ -41,8 +41,7 @@ def app_create_categories_from_clustering(cluster_context,
     app_logger.debug(f"predicting categories with a sample size of {sample_size}")
     start_time = time.time()
     streaming_avg_lsa = None
-    for label in cluster_context.cluster_model.labels_:
-        categories[label] = Counter()
+    labels = set(cluster_context.cluster_model.labels_)
 
     for document in sample:
         document_vector = vectorizer.transform(document.vector_dict()) # .vector_dict()
@@ -58,6 +57,8 @@ def app_create_categories_from_clustering(cluster_context,
         # Prediction is cluster id which is from ([-1]) [0] ... [n]
         prediction = str(cluster_context.predict(document_vector))
         category = document_hashes_by_hashes[document.id][0].category()
+        if prediction not in categories:
+            categories[prediction] = Counter()
         used_categories.add(category)
         categories[prediction][category] += 1
         iter += 1
@@ -68,6 +69,7 @@ def app_create_categories_from_clustering(cluster_context,
                 app_logger.debug(f"average time for LSA transform is {round(streaming_avg_lsa * 1000)} ms")
             app_logger.debug(f"{pos} done for modelling, time elapsed {round(time_elapsed)} ms")
 
+    cu.fill_labels(categories, labels, used_categories)
     # Add zeroes for all categories so results are equal size
     cu.fill_counters(categories, used_categories)
 
