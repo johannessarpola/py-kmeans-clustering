@@ -66,15 +66,17 @@ class ClusterContext(Identified):
     silhuette_coefficent = 0.0
     X = {}
     X_pred = {}
+    svd = {}
 
     def __init__(self, id, clustering_model,
-                 vectorizer, silhuette, X = None, predictionF = None):
+                 vectorizer, silhuette, X = None, predictionF = None, svd = None):
         super().__init__(id)
         self.cluster_model = clustering_model
         self.vectorizer = vectorizer
         self.silhuette_coefficent = silhuette
         self.X = X
         self.predictionF = predictionF
+        self.svd = svd
 
     def predict(self, X):
         return self.predictionF(X)

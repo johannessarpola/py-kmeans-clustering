@@ -7,7 +7,8 @@ from app.src import models, \
     input_output, \
     aggregation, \
     model_utils,\
-    multiprocessing_utils
+    multiprocessing_utils, \
+    logger_factory
 
 def relative_resource(path):
     dir = os.path.dirname(__file__)

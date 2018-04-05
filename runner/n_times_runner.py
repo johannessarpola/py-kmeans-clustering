@@ -36,3 +36,5 @@ if __name__ == '__main__':
         gc.collect()
         print(f"-- Done with {i + 1}/{args.ntimes} iteration")
     print("-- Runner is finished!")
+    import sys
+    sys.exit(0)
