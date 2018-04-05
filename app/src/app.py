@@ -28,7 +28,7 @@ def chunks(l, n):
 def app_create_categories_from_clustering(cluster_context,
                                           documents,
                                           document_hashes_by_hashes,
-                                          queue, sample_size = 1000):
+                                          queue, sample_size = 1):
     categories = defaultdict(dict)
     vectorizer = cluster_context.vectorizer
     svd =  cluster_context.svd
@@ -38,7 +38,7 @@ def app_create_categories_from_clustering(cluster_context,
     import random
     sample = random.sample(documents, sample_size)
     iter = 0
-    app_logger.debug(f"predicting categories with a sample size of {sample_size}")
+    app_logger.info(f"predicting categories with a sample size of {sample_size}")
     start_time = time.time()
     streaming_avg_lsa = None
     labels = set(cluster_context.cluster_model.labels_)
@@ -66,8 +66,8 @@ def app_create_categories_from_clustering(cluster_context,
             pos = f"{iter}/{sample_size}"
             time_elapsed = (time.time() - start_time) * 1000
             if streaming_avg_lsa is not None:
-                app_logger.debug(f"average time for LSA transform is {round(streaming_avg_lsa * 1000)} ms")
-            app_logger.debug(f"{pos} done for modelling, time elapsed {round(time_elapsed)} ms")
+                app_logger.info(f"average time for LSA transform is {round(streaming_avg_lsa * 1000)} ms")
+            app_logger.info(f"{pos} done for modelling, time elapsed {round(time_elapsed)} ms")
 
     cu.fill_labels(categories, labels, used_categories)
     # Add zeroes for all categories so results are equal size
@@ -86,7 +86,7 @@ def app_do_clustering(documents_by_strategies, document_hashes_by_hashes, cluste
         documents = documents_by_strategies[cluster_context.id]
         p = mpu.create_process_and_start(app_create_categories_from_clustering,
                                          (cluster_context, documents, document_hashes_by_hashes, queue),
-                                         app_logger.debug(f"Started {cluster_context.id} clustering"))
+                                         app_logger.info(f"Started {cluster_context.id} clustering"))
         processes.append(p)
     return processes
 
@@ -97,7 +97,7 @@ def app_create_cluster_context(num_clusters, models_output, documents_by_strateg
     for (strategy, documents) in documents_by_strategies.items():
         p = mpu.create_process_and_start(create_cluster_context_sink,
                                          (num_clusters, models_output, strategy, documents, queue),
-                                         app_logger.debug(f"Started {strategy} cluster context modelling"))
+                                         app_logger.info(f"Started {strategy} cluster context modelling"))
         processes.append(p)
     return processes
 
@@ -146,17 +146,17 @@ def app_grouping_worker(source_jsons, hash_jsons):
     p_dbs = mpu.create_process_and_start(do_grouping_sink,
                                          (dbs_id, 'strategy', mu.document_combiner,
                                           source_jsons, queue),
-                                         app_logger.debug(f"Started grouping with id: {dbs_id}"))
+                                         app_logger.info(f"Started grouping with id: {dbs_id}"))
 
     p_dbh = mpu.create_process_and_start(do_grouping_sink,
                                          (dbh_id, 'id', mu.document_combiner,
                                           source_jsons, queue),
-                                         app_logger.debug(f"Started grouping with id: {dbh_id}"))
+                                         app_logger.info(f"Started grouping with id: {dbh_id}"))
 
     p_dhbh = mpu.create_process_and_start(do_grouping_sink,
                                           (dhbh_id, 'id', mu.document_hash_combiner,
                                            hash_jsons, queue),
-                                          app_logger.debug(f"Started grouping with id: {dhbh_id}"))
+                                          app_logger.info(f"Started grouping with id: {dhbh_id}"))
 
     results = mpu.gather_to_dict_from_tuples_and_join(queue, [p_dbs, p_dbh, p_dhbh])
     queue.close()
