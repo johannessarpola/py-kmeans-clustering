@@ -41,6 +41,9 @@ def app_create_categories_from_clustering(cluster_context,
     app_logger.debug(f"predicting categories with a sample size of {sample_size}")
     start_time = time.time()
     streaming_avg_lsa = None
+    for label in cluster_context.cluster_model.labels_:
+        categories[label] = Counter()
+
     for document in sample:
         document_vector = vectorizer.transform(document.vector_dict()) # .vector_dict()
         if svd is not None:
@@ -55,12 +58,10 @@ def app_create_categories_from_clustering(cluster_context,
         # Prediction is cluster id which is from ([-1]) [0] ... [n]
         prediction = str(cluster_context.predict(document_vector))
         category = document_hashes_by_hashes[document.id][0].category()
-        if prediction not in categories:
-            categories[prediction] = Counter()
         used_categories.add(category)
         categories[prediction][category] += 1
         iter += 1
-        if(iter %100==0):
+        if(iter %(sample_size/10)==0):
             pos = f"{iter}/{sample_size}"
             time_elapsed = (time.time() - start_time) * 1000
             if streaming_avg_lsa is not None:

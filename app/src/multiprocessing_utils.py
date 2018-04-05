@@ -42,7 +42,6 @@ def gather_to_dict_from_clustering_context_and_dict_and_join(queue, processes):
     d = defaultdict(dict)
     for _ in processes:
         process_result = queue.get()
-        # TODO probably clearer to do object rather than tuple here
         d[process_result[0].id] = (process_result[1], process_result[0])
     join_all(processes)
     return d
