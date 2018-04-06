@@ -23,11 +23,16 @@ class Document(Identified):
         self.strategy = strategy
         self.vector = vector
 
-    def vector_dict(self):
+    def vector_dict(self, normalized = True):
         dict = {}
+        range = max(self.max - self.min, 1)
         for v in self.vector:
             w, v = v.rsplit(':', 1)
-            dict[w] = float(v)
+            fv = float(v)
+            # If range is 1 then all are in their correct values
+            if normalized and range != 1:
+                fv = (fv - 1) * range + self.min
+            dict[w] = fv
         return dict
 
 
@@ -59,14 +64,22 @@ class ClusterContext(Identified):
     cluster_model = {}
     vectorizer = {}
     silhuette_coefficent = 0.0
+    X = {}
+    X_pred = {}
+    svd = {}
 
     def __init__(self, id, clustering_model,
-                 vectorizer, silhuette):
+                 vectorizer, silhuette, X = None, predictionF = None, svd = None):
         super().__init__(id)
         self.cluster_model = clustering_model
         self.vectorizer = vectorizer
         self.silhuette_coefficent = silhuette
+        self.X = X
+        self.predictionF = predictionF
+        self.svd = svd
 
+    def predict(self, X):
+        return self.predictionF(X)
 
 class CountElement(Identified):
     cnt = 0

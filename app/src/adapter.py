@@ -6,7 +6,7 @@ from app.src.obj_utils import call_if_obj_has_method_or_default
 def json_to_document(json):
     id = json["id"]
     max = json["max"]
-    min = json["id"]
+    min = json["min"]
     strategy = json["strategy"]
     vector = json["vector"]
     return models.Document(id, max, min, strategy, vector)
