@@ -28,7 +28,7 @@ def chunks(l, n):
 def app_create_categories_from_clustering(cluster_context,
                                           documents,
                                           document_hashes_by_hashes,
-                                          queue, sample_size = 1):
+                                          queue, sample_size = 5000):
     categories = defaultdict(dict)
     vectorizer = cluster_context.vectorizer
     svd =  cluster_context.svd
