@@ -84,10 +84,10 @@ def calculate_cluster_silhuette_score(X, model, metric='euclidean', id = None):
     labels = model.labels_
     logger.info(f"{id}: {set(labels)} labels")
     attemps = 1
-    max_attempts = 10
+    max_attempts = 3
     while attemps <= max_attempts:
         try:
-            return silhouette_score(X, labels, metric=metric, sample_size=1000 * attemps)
+            return silhouette_score(X, labels, metric=metric, sample_size=5000 * attemps)
         except ValueError as e:
             attemps += 1
             logger.error(f"{id}: {attemps}/{max_attempts} Could not calculate silhouette value with error {e}")
