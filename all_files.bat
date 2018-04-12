@@ -14,5 +14,5 @@ start "Tenth" /wait py runner/n_times_runner.py -if .data/input/replace-apps-clo
 start "Eleventh" /wait py runner/n_times_runner.py -if .data/input/replace-beauty-gourmet-pets/docs -hf .data/input//replace-beauty-gourmet-pets/hashes -nc 3 -n 3 -o .data/replace-beauty-gourmet-pets/result_3.json -om .data/replace-beauty-gourmet-pets/models3
 start "Twelfth" /wait py runner/n_times_runner.py -if .data/input/replace-books-cell_accessories-sports_outdoors/docs -hf .data/input//replace-books-cell_accessories-sports_outdoors/hashes -nc 3 -n 3 -o .data/replace-books-cell_accessories-sports_outdoors/result_3.json -om .data/replace-books-cell_accessories-sports_outdoors/models3
 
-Shutdown computer when done
-shutdown.exe /s /t 00
+REM Shutdown computer when done
+REM shutdown.exe /s /t 00

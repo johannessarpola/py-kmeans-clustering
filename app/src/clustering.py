@@ -1,4 +1,4 @@
-from sklearn.cluster import KMeans, MiniBatchKMeans, DBSCAN, AffinityPropagation, MeanShift
+from sklearn.cluster import KMeans, MiniBatchKMeans, DBSCAN, AffinityPropagation, MeanShift, AgglomerativeClustering
 import hdbscan
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.feature_extraction import DictVectorizer
@@ -8,6 +8,8 @@ from app.src.models import ClusterContext
 from sklearn.metrics import silhouette_score
 from sklearn.externals import joblib
 from sklearn.decomposition import TruncatedSVD
+import _pickle as pickle
+
 
 log_factory = logger_factory.LoggerFactory()
 logger = log_factory.instance(__name__)
@@ -27,10 +29,10 @@ def create_minibatch_kmeans_model(num_clusters, X, id = None):
     return model, model.predict, silhouette
 
 
-def train_classifier(X, model):
+def train_classifier(X, model, metric = 'euclidean'):
     logger.info('Starting to train KNeighborsClassifier')
     X_p = model.fit_predict(X)
-    classifier = KNeighborsClassifier().fit(X, X_p)
+    classifier = KNeighborsClassifier(n_neighbors=1, metric=metric).fit(X, X_p)
     return classifier
 
 def create_dbscan_model(epsilon, X, min_samples=100, metric='cosine', id = None):
@@ -55,12 +57,21 @@ def create_affinity_propagation_model(X, damping=0.5, max_iter=200, id = None):
     return model, model.predict, silhouette
 
 
-def create_mean_shift_propagation(X, metric='euclidean', cluster_all= False, bandwidth=0.175, id = None):
+def create_mean_shift_propagation_model(X, metric='euclidean', cluster_all= False, bandwidth=0.175, id = None):
     # Broken gets stuck
     model = MeanShift(bandwidth=bandwidth, cluster_all=cluster_all, seeds=10)
     model.fit(X)
     silhouette = calculate_cluster_silhuette_score(X, model, metric, id)
     return model, model.predict, silhouette
+
+# linkage for cosine only works for average
+def create_agglomerative_model(X, num_clusters, id = None, metric ='cosine', linkage ='average'):
+    # Broken gets stuck
+    model = AgglomerativeClustering(n_clusters=num_clusters, affinity=metric, linkage=linkage)
+    model.fit(X)
+    silhouette = calculate_cluster_silhuette_score(X, model, metric, id)
+    classifier = train_classifier(X, model, metric=metric) # model has also fit_predict
+    return model, classifier.predict, silhouette
 
 
 def vectorize(documents, id = None):
@@ -94,7 +105,7 @@ def calculate_cluster_silhuette_score(X, model, metric='euclidean', id = None):
     return 'NaN'
 
 
-def create_cluster_context_sink(num_clusters, output_folder, id, documents, queue, modeller='kmeans', lsa=True):
+def create_cluster_context_sink(num_clusters, output_folder, id, documents, queue, modeller='a', lsa=True):
     raw_X, vectorizer = vectorize(documents, id)
     lsa_X = None
     svd = None
@@ -115,6 +126,9 @@ def create_cluster_context_sink(num_clusters, output_folder, id, documents, queu
     elif modeller == 'dbscan':
         logger.info(f"Creating dbscan model")
         model, predictionF, silhouette = create_dbscan_model(0.65, X, id)
+    elif modeller == 'agglomerative':
+        logger.info(f"Creating agglomerative model")
+        model, predictionF, silhouette = create_agglomerative_model(X, num_clusters, id)
     elif modeller == 'hdbscan':
         logger.info(f"Creating hdbscan model")
         model, predictionF, silhouette = create_hdbscan_model(X, id)
@@ -122,14 +136,15 @@ def create_cluster_context_sink(num_clusters, output_folder, id, documents, queu
         logger.info("Creating kmeans model")
         model, predictionF, silhouette = create_kmeans_model(num_clusters, X, id)
     logger.info(f"{id}: Done modelling")
-    context = ClusterContext(id, model, vectorizer, silhouette, X, predictionF, svd)
+    context = ClusterContext(id, model, vectorizer, silhouette, predictionF, svd)
     if output_folder is not None and model is not None:
-        serialize_model(output_folder, id, model)
+        serialize_context(output_folder, id, context)
     queue.put(context)
     return
 
 
-def serialize_model(folder, filename, model):
-    path = f"{folder}/{filename}.model"
-    joblib.dump(model, path)
+def serialize_context(folder, filename, context):
+    path = f"{folder}/{filename}.ctx"
+    with open(path, 'wb') as out:
+        pickle.dump(context, out)
     return path

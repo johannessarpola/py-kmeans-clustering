@@ -23,7 +23,7 @@ class Document(Identified):
         self.strategy = strategy
         self.vector = vector
 
-    def vector_dict(self, normalized = True):
+    def vector_dict(self, normalized=True):
         dict = {}
         range = max(self.max - self.min, 1)
         for v in self.vector:
@@ -61,25 +61,24 @@ class DocumentHash(Identified):
 
 
 class ClusterContext(Identified):
-    cluster_model = {}
-    vectorizer = {}
-    silhuette_coefficent = 0.0
-    X = {}
-    X_pred = {}
-    svd = {}
 
     def __init__(self, id, clustering_model,
-                 vectorizer, silhuette, X = None, predictionF = None, svd = None):
+                 vectorizer,
+                 silhuette,
+                 predictionF=None,
+                 svd=None,
+                 persisted_path=''):
         super().__init__(id)
         self.cluster_model = clustering_model
         self.vectorizer = vectorizer
         self.silhuette_coefficent = silhuette
-        self.X = X
-        self.predictionF = predictionF
+        self.predict = predictionF
         self.svd = svd
+        self.persisted_path = persisted_path
 
     def predict(self, X):
-        return self.predictionF(X)
+        return self.predict(X)
+
 
 class CountElement(Identified):
     cnt = 0
@@ -107,6 +106,7 @@ class DictElement(Identified):
 class ClusteringResult(DictElement):
     silhouette = 0.0
     path_to_model = ""
+
     def __init__(self, id, clusters, silhouette, path_to_model=""):
         super().__init__(id, clusters, 'clusters')
         self.silhouette = silhouette
@@ -122,4 +122,3 @@ class ClusteringResult(DictElement):
 class Cluster(DictElement):
     def __init__(self, id, clusters):
         super().__init__(id, clusters, 'categories')
-
