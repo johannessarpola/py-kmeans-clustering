@@ -18,5 +18,5 @@ setup(name='clustering_cli',
       url='https://gitlab.com/johannessarpola/',
       packages=['app'],
       setup_requires=['pytest-runner', 'numpy', 'scikit-learn', 'scipy'],
-      tests_require=['pytest'],
+      tests_require=['pytest'], install_requires=['hdbscan']
       )

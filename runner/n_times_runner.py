@@ -2,6 +2,7 @@
 import argparse
 import gc
 import os
+from runner.runner_commons import sound_notification_and_quit
 
 from app.src import app
 
@@ -16,25 +17,25 @@ parser.add_argument('-om', "--output-models", help="where the cluster models wil
 
 args = parser.parse_args()
 
+
 if __name__ == '__main__':
     docs_folder = args.input_folder
     hashes_folder = args.hash_folder
     num_clusters = int(args.num_clusters)
     output_file = args.output
     output_models = args.output_models
-
     if output_models is None:
         output_models = os.path.dirname(output_file)
 
     for i in range(0, int(args.ntimes)):
-        print(f"-- Running {i}/{args.ntimes}")
+        app.app_logger.info(f"-- Running {i}/{args.ntimes}")
         (f, e) = output_file.rsplit('.', 1)
         models_path =  f"{output_models}/{i}"
         if not os.path.exists(models_path):
             os.makedirs(models_path)
         app.main(docs_folder, hashes_folder, num_clusters, f"{f}_{i}.{e}", models_path)
         gc.collect()
-        print(f"-- Done with {i + 1}/{args.ntimes} iteration")
-    print("-- Runner is finished!")
-    import sys
-    sys.exit(0)
+        app.app_logger.info(f"-- Done with {i + 1}/{args.ntimes} iteration")
+    sound_notification_and_quit(lambda: app.app_logger.info("-- Runner is finished!"))
+
+
