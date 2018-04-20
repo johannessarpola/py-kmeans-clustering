@@ -35,7 +35,7 @@ def app_create_categories_from_clustering(cluster_context,
     used_categories = set()
     # d_chunks = chunks(documents, 1000)
 
-    original_silhouette = calculate_original_silhouette(cluster_context, documents, document_hashes_by_hashes)
+    cluster_context.original_silhouette = calculate_original_silhouette(cluster_context, documents, document_hashes_by_hashes)
 
     import random
     sample = random.sample(documents, sample_size)
@@ -82,7 +82,7 @@ def app_create_categories_from_clustering(cluster_context,
     queue.put((cluster_context, sorted_dict))
 
 
-def app_do_clustering(documents_by_strategies, document_hashes_by_hashes, cluster_contexts, queue):
+def app_parallel_clustering(documents_by_strategies, document_hashes_by_hashes, cluster_contexts, queue):
     processes = []
     for cluster_context in cluster_contexts:
         documents = documents_by_strategies[cluster_context.id]
@@ -93,7 +93,7 @@ def app_do_clustering(documents_by_strategies, document_hashes_by_hashes, cluste
     return processes
 
 
-def app_create_cluster_context(num_clusters, models_output, documents_by_strategies, queue):
+def app_parallel_create_cluster_contexts(num_clusters, models_output, documents_by_strategies, queue):
     """"""
     processes = []
     for (strategy, documents) in documents_by_strategies.items():
@@ -106,15 +106,15 @@ def app_create_cluster_context(num_clusters, models_output, documents_by_strateg
 
 def app_create_cluster_context_worker(num_clusters, models_output, documents_by_strategies):
     queue = mp.Queue()
-    processes = app_create_cluster_context(num_clusters, models_output, documents_by_strategies, queue)
+    processes = app_parallel_create_cluster_contexts(num_clusters, models_output, documents_by_strategies, queue)
     cluster_contexts = mpu.gather_to_list_and_join(queue, processes)
     queue.close()
     return cluster_contexts
 
 
-def app_do_clustering_worker(documents_by_strategies, document_hashes_by_hashes, cluster_context):
+def app_gather_categories_by_clusters_worker(documents_by_strategies, document_hashes_by_hashes, cluster_context):
     queue = mp.Queue()
-    processes = app_do_clustering(documents_by_strategies, document_hashes_by_hashes, cluster_context, queue)
+    processes = app_parallel_clustering(documents_by_strategies, document_hashes_by_hashes, cluster_context, queue)
     categories_by_clusters = mpu.gather_to_dict_from_clustering_context_and_dict_and_join(queue, processes)
     queue.close()
     return categories_by_clusters
@@ -122,8 +122,8 @@ def app_do_clustering_worker(documents_by_strategies, document_hashes_by_hashes,
 
 def app_clustering_worker(num_clusters, models_output, documents_by_strategies, document_hashes_by_hashes):
     cluster_contexts = app_create_cluster_context_worker(num_clusters, models_output, documents_by_strategies)
-    categories_by_clusters = app_do_clustering_worker(documents_by_strategies, document_hashes_by_hashes,
-                                                      cluster_contexts)
+    categories_by_clusters = app_gather_categories_by_clusters_worker(documents_by_strategies, document_hashes_by_hashes,
+                                                                      cluster_contexts)
     return categories_by_clusters
 
 

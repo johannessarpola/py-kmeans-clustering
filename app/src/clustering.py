@@ -165,3 +165,11 @@ def serialize_context(folder, filename, context):
     with open(path, 'wb') as out:
         pickle.dump(context, out)
     return path
+
+
+def purity_score(dict, total_size):
+    all = []
+    for cluster, cats in dict.items():
+        max_in_clus = max(list(map(lambda t: t[1], cats.items())))
+        all.append(max_in_clus)
+    return sum(all) / total_size

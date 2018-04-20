@@ -64,17 +64,18 @@ class ClusterContext(Identified):
 
     def __init__(self, id, clustering_model,
                  vectorizer,
-                 silhuette,
+                 model_silhouette,
                  predictionF=None,
                  svd=None,
-                 persisted_path=''):
+                 persisted_path='', original_silhouette = None):
         super().__init__(id)
         self.cluster_model = clustering_model
         self.vectorizer = vectorizer
-        self.silhuette_coefficent = silhuette
+        self.model_silhouette = model_silhouette
         self.predict = predictionF
         self.svd = svd
         self.persisted_path = persisted_path
+        self.original_silhouette = original_silhouette
 
     def predict(self, X):
         return self.predict(X)
@@ -104,17 +105,20 @@ class DictElement(Identified):
 
 
 class ClusteringResult(DictElement):
-    silhouette = 0.0
+    silhouette = "NaN"
+    original_silhouette = "NaN"
     path_to_model = ""
 
-    def __init__(self, id, clusters, silhouette, path_to_model=""):
+    def __init__(self, id, clusters, silhouette, original_silhouette, path_to_model=""):
         super().__init__(id, clusters, 'clusters')
         self.silhouette = silhouette
+        self.original_silhouette = original_silhouette
         self.path_to_model = path_to_model
 
     def asJson(self):
         base = super().asJson()
         base['silhouette'] = self.silhouette
+        base['original_silhouette'] = self.original_silhouette
         base['path_to_model'] = self.path_to_model
         return base
 
@@ -122,3 +126,4 @@ class ClusteringResult(DictElement):
 class Cluster(DictElement):
     def __init__(self, id, clusters):
         super().__init__(id, clusters, 'categories')
+

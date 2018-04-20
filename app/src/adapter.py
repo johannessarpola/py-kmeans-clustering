@@ -64,10 +64,10 @@ def cluster_dict_to_output_format(dict):
     # v is tuple of context and clustering results in dict
     for (k, v) in dict.items():
         des = []
-        clusters,context = v
+        clusters,cluster_context = v
         for (i,c) in clusters.items():
             des.append(models.Cluster(i, c).asJson())
-        result.append(models.ClusteringResult(k, des, context.silhuette_coefficent).asJson())
+        result.append(models.ClusteringResult(k, des, cluster_context.model_silhouette, cluster_context.original_silhouette).asJson())
     return result
 
 
