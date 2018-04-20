@@ -8,7 +8,7 @@ from app.src import multiprocessing_utils as mpu
 from app.src import collection_utils as cu
 from app.src import aggregation, input_output, logger_factory
 from app.src.adapter import clustering_dict_to_json
-from app.src.clustering import create_cluster_context_sink
+from app.src.clustering import create_cluster_context_sink, calculate_original_silhouette
 
 log_factory = logger_factory.LoggerFactory()
 app_logger = log_factory.instance(__name__)
@@ -34,6 +34,8 @@ def app_create_categories_from_clustering(cluster_context,
     svd =  cluster_context.svd
     used_categories = set()
     # d_chunks = chunks(documents, 1000)
+
+    original_silhouette = calculate_original_silhouette(cluster_context, documents, document_hashes_by_hashes)
 
     import random
     sample = random.sample(documents, sample_size)

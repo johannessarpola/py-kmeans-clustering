@@ -15,4 +15,4 @@ start "Eleventh" /wait py runner/n_times_runner.py -if .data/input/replace-beaut
 start "Twelfth" /wait py runner/n_times_runner.py -if .data/input/replace-books-cell_accessories-sports_outdoors/docs -hf .data/input//replace-books-cell_accessories-sports_outdoors/hashes -nc 3 -n 3 -o .data/replace-books-cell_accessories-sports_outdoors/result_3.json -om .data/replace-books-cell_accessories-sports_outdoors/models3
 
 REM Shutdown computer when done
-REM shutdown.exe /s /t 00
+shutdown.exe /s /t 00
