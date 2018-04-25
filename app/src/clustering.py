@@ -2,6 +2,9 @@ from sklearn.cluster import KMeans, MiniBatchKMeans, DBSCAN, AffinityPropagation
 import hdbscan
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.feature_extraction import DictVectorizer
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import Normalizer
+from time import time
 
 from app.src import logger_factory
 from app.src.models import ClusterContext
@@ -15,6 +18,7 @@ logger = log_factory.instance(__name__)
 
 EUCLIDEAN_METRIC = 'euclidean'
 COSINE_METRIC = 'cosine'
+
 
 def create_kmeans_model(num_clusters, X, id=None):
     model = KMeans(n_clusters=num_clusters, init='k-means++')
@@ -77,21 +81,30 @@ def create_agglomerative_model(X, num_clusters, id=None, metric=COSINE_METRIC, l
     return model, classifier.predict, silhouette
 
 
-def vectorize(documents, id=None):
+def vectorize(documents, id=None, normalizer=None):
     logger.info(f'{id}: Vectorizing')
     dict_vectors = list(map(lambda d: d.vector_dict(), documents))
     vectorizer = DictVectorizer()
-    X = vectorizer.fit_transform(dict_vectors)
+    if normalizer is not None:
+        pipeline = make_pipeline(vectorizer, normalizer)
+    else:
+        pipeline = vectorizer
+
+    X = pipeline.fit_transform(dict_vectors)
     logger.info(f"{id}: Total number of features in raw vector space: {len(vectorizer.feature_names_)}")
-    return X, vectorizer
+    return X, pipeline
 
 
-def do_lsa(X, n_components=100, n_iter=10, random_state=None, id=None):
+def do_lsa(X, n_components=100, n_iter=10, random_state=None, id=None, normalizer=None):
     logger.info('doing lsa')
     svd = TruncatedSVD(n_components=n_components, n_iter=n_iter, random_state=random_state)
-    trunc_x = svd.fit_transform(X)
+    if normalizer is not None:
+        pipeline = make_pipeline(svd, normalizer)
+    else:
+        pipeline = svd
+    trunc_x = pipeline.fit_transform(X)
     logger.info(f"{id}: Total features after LSA: {n_components}")
-    return trunc_x, svd
+    return trunc_x, pipeline
 
 
 def calculate_cluster_silhuette_score(X, model, metric=EUCLIDEAN_METRIC, id=None):
@@ -122,14 +135,18 @@ def calculate_original_silhouette(cluster_context: ClusterContext, documents, ha
                               , max_attempts=3)
 
 
-def create_cluster_context_sink(num_clusters, output_folder, id, documents, queue, modeller='a', lsa=True):
-    raw_X, vectorizer = vectorize(documents, id)
+def create_cluster_context_sink(num_clusters, output_folder, id, documents, queue, modeller='a', lsa=True,
+                                normalization=True):
+    start_time = time()
+    normalizer = None
+    if normalization:
+        normalizer = Normalizer(copy=False)
+    raw_X, vectorizer = vectorize(documents, id, normalizer)
     lsa_X = None
     svd = None
     if lsa:
-        lsa_X, svd = do_lsa(raw_X, n_components=100, n_iter=10, id=id)
-    else:
-        pass
+        lsa_X, svd = do_lsa(raw_X, n_components=100, n_iter=10, id=id, normalizer=normalizer)
+
     X = raw_X if lsa_X is None else lsa_X
     if modeller == 'minibatch':
         logger.info(f"minibatch model")
@@ -153,9 +170,11 @@ def create_cluster_context_sink(num_clusters, output_folder, id, documents, queu
         logger.info("Creating kmeans model")
         model, predictionF, silhouette = create_kmeans_model(num_clusters, X, id)
     logger.info(f"{id}: Done modelling")
-    context = ClusterContext(id, model, vectorizer, silhouette, predictionF, svd)
+    context = ClusterContext(id, model, vectorizer, silhouette, predictionF, svd, 0.0)
     if output_folder is not None and model is not None:
         serialize_context(output_folder, id, context)
+
+    context.running_time += (time() - start_time) * 1000
     queue.put(context)
     return
 
@@ -167,7 +186,7 @@ def serialize_context(folder, filename, context):
     return path
 
 
-def purity_score(dict, total_size):
+def calculate_purity_score(dict, total_size):
     all = []
     for cluster, cats in dict.items():
         max_in_clus = max(list(map(lambda t: t[1], cats.items())))

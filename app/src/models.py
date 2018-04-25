@@ -67,7 +67,10 @@ class ClusterContext(Identified):
                  model_silhouette,
                  predictionF=None,
                  svd=None,
-                 persisted_path='', original_silhouette = None):
+                 persisted_path='',
+                 original_silhouette=None,
+                 purity_score=None,
+                 running_time=0.0):
         super().__init__(id)
         self.cluster_model = clustering_model
         self.vectorizer = vectorizer
@@ -76,6 +79,8 @@ class ClusterContext(Identified):
         self.svd = svd
         self.persisted_path = persisted_path
         self.original_silhouette = original_silhouette
+        self.purity_score = purity_score
+        self.running_time = running_time
 
     def predict(self, X):
         return self.predict(X)
@@ -108,22 +113,27 @@ class ClusteringResult(DictElement):
     silhouette = "NaN"
     original_silhouette = "NaN"
     path_to_model = ""
+    purity_score = "NaN"
 
-    def __init__(self, id, clusters, silhouette, original_silhouette, path_to_model=""):
+    def __init__(self, id, clusters, silhouette, original_silhouette, purity_score, running_time=0.0,
+                 path_to_model=""):
         super().__init__(id, clusters, 'clusters')
         self.silhouette = silhouette
         self.original_silhouette = original_silhouette
         self.path_to_model = path_to_model
+        self.purity_score = purity_score
+        self.running_time = running_time
 
     def asJson(self):
         base = super().asJson()
         base['silhouette'] = self.silhouette
         base['original_silhouette'] = self.original_silhouette
+        base['purity_score'] = self.purity_score
         base['path_to_model'] = self.path_to_model
+        base['running_time (ms)'] = round(self.running_time, 2)
         return base
 
 
 class Cluster(DictElement):
     def __init__(self, id, clusters):
         super().__init__(id, clusters, 'categories')
-

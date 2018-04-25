@@ -8,7 +8,7 @@ from app.src import multiprocessing_utils as mpu
 from app.src import collection_utils as cu
 from app.src import aggregation, input_output, logger_factory
 from app.src.adapter import clustering_dict_to_json
-from app.src.clustering import create_cluster_context_sink, calculate_original_silhouette
+from app.src.clustering import create_cluster_context_sink, calculate_original_silhouette, calculate_purity_score
 
 log_factory = logger_factory.LoggerFactory()
 app_logger = log_factory.instance(__name__)
@@ -29,6 +29,7 @@ def app_create_categories_from_clustering(cluster_context,
                                           documents,
                                           document_hashes_by_hashes,
                                           queue, sample_size = 1500):
+    total_start_time = time.time()
     categories = defaultdict(dict)
     vectorizer = cluster_context.vectorizer
     svd =  cluster_context.svd
@@ -78,6 +79,10 @@ def app_create_categories_from_clustering(cluster_context,
     # Sort by categories which are from 0 .. n
     sorting = sorted(categories.items(), key=lambda t: t[0])
     sorted_dict = OrderedDict(sorting)
+
+    cluster_context.purity_score = calculate_purity_score(sorted_dict, sample_size)
+    cluster_context.running_time += (time.time() - start_time) * 1000
+
     # Put (id, dict) to queue
     queue.put((cluster_context, sorted_dict))
 
@@ -168,7 +173,8 @@ def app_grouping_worker(source_jsons, hash_jsons):
 
 
 def main(docs_f, hashes_f, num_c, output_f, output_models):
-    import os.path
+    import time
+    start_time = time.time()
     docs_folder = docs_f
     hashes_folder = hashes_f
     num_clusters = num_c
@@ -178,8 +184,9 @@ def main(docs_f, hashes_f, num_c, output_f, output_models):
 
     documents_by_strategies, documents_by_hashes, document_hashes_by_hashes = app_grouping_worker(source_jsons,
                                                                                                   hash_jsons)
-    # todo models output should be configurable
+
     clustering_results = app_clustering_worker(num_clusters, output_models, documents_by_strategies,
                                                document_hashes_by_hashes)
+
     json_str = clustering_dict_to_json(clustering_results)
     input_output.write_and_close(output_file, json_str)

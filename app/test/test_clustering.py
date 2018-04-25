@@ -11,5 +11,5 @@ class AggregationTest(unittest.TestCase):
 
         d = {'C1': a, 'C2': b, 'C3': c}
 
-        purity = clustering.purity_score(d, 48)
+        purity = clustering.calculate_purity_score(d, 48)
         self.assertEquals(0.625, purity)
