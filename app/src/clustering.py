@@ -131,7 +131,7 @@ def calculate_original_silhouette(cluster_context: ClusterContext, documents, ha
     doc_tuples = list(map(lambda d: (hashes[d.id][0].category(), d.vector_dict()), documents))
     doc_cats = asanyarray(list(map(lambda t: t[0], doc_tuples)))
     X = vectorizer.fit_transform(list(map(lambda t: t[1], doc_tuples)))
-    return attempt_silhouette(X, asanyarray(doc_cats), metric=EUCLIDEAN_METRIC, sample_size_start=5000
+    return attempt_silhouette(X, asanyarray(doc_cats), metric=metric, sample_size_start=5000
                               , max_attempts=3)
 
 

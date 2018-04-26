@@ -82,6 +82,7 @@ def app_create_categories_from_clustering(cluster_context,
 
     cluster_context.purity_score = calculate_purity_score(sorted_dict, sample_size)
     cluster_context.running_time += (time.time() - start_time) * 1000
+    # TODO Add entropy calculation
 
     # Put (id, dict) to queue
     queue.put((cluster_context, sorted_dict))
